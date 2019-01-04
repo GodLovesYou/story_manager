@@ -1,16 +1,16 @@
 <template>
   <div class="login-wrap">
-    <div class="ms-title">登录管理系统</div>
+    <div class="ms-title">后台管理系统</div>
     <div class="ms-login">
       <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="0px" class="demo-ruleForm">
-        <div v-if="errorInfo">
-          <span>{{errorInfo}}</span>
-        </div>
         <el-form-item prop="name">
-          <el-input v-model="ruleForm.name" placeholder="账号"></el-input>
+          <el-input v-model="ruleForm.username" placeholder="账号"></el-input>
         </el-form-item>
         <el-form-item prop="password">
           <el-input type="password" placeholder="密码" v-model="ruleForm.password" @keyup.enter.native="submitForm('ruleForm')"></el-input>
+          <div v-if="errorInfo">
+            <span>{{errInfo}}</span>
+          </div>
         </el-form-item>
         <div class="login-btn">
           <el-button type="primary" @click="submitForm('ruleForm')">登录</el-button>
@@ -27,13 +27,14 @@ export default {
   data () {
     return {
       errorInfo: false,
+      errInfo: '',
       ruleForm: {
-        name: '',
+        username: '',
         password: '',
         validate: ''
       },
       rules: {
-        name: [
+        username: [
           {required: true, message: '请输入用户名', trigger: 'blur'}
         ],
         password: [
@@ -47,18 +48,15 @@ export default {
       const self = this
       self.$refs[formName].validate((valid) => {
         if (valid) {
-          self.$axios.post('http://localhost:3000/api/user/login', JSON.stringify(self.ruleForm))
+          self.$axios.post('http://localhost:3000/story/user/login', JSON.stringify(self.ruleForm))
             .then((response) => {
-              if (response.data === -1) {
-                self.errorInfo = true
-                self.errInfo = '该用户不存在'
-              } else if (response.data === 0) {
-                self.errorInfo = true
-                self.errInfo = '密码错误'
-              } else if (response.status === 200) {
+              let res = response.data
+              if (res.errorCode === '0x0000') {
                 self.$router.push('/readme')
-                sessionStorage.setItem('ms_username', self.ruleForm.name)
-                sessionStorage.setItem('ms_user', JSON.stringify(self.ruleForm))
+                sessionStorage.setItem('user', JSON.stringify(self.ruleForm))
+              } else {
+                self.errorInfo = true
+                self.errInfo = '用户名或密码错误'
               }
             }).then((error) => {
               console.log(error)
